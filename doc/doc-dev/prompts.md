@@ -37,7 +37,7 @@ Add these dependencies to go.mod (do not run go mod tidy yet — just add them):
 - github.com/spf13/cobra v1.8.0
 - github.com/spf13/viper v1.18.0
 - github.com/fatih/color v1.16.0
-- github.com/pganalyze/pg_query_go/v5 v5.1.0
+- github.com/pganalyze/pg_query_go/v6 v6.2.2
 
 Create a minimal main.go that prints "locksmith" and exits.
 
@@ -124,7 +124,7 @@ The function must:
    d. Build a Statement struct
 4. Return a ParseResult
 
-Use github.com/pganalyze/pg_query_go/v5 for parsing. Import it as pg_query.
+Use github.com/pganalyze/pg_query_go/v6 for parsing. Import it as pg_query.
 
 Handle these error cases:
 - File not found: return a descriptive error

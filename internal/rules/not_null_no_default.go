@@ -1,6 +1,6 @@
 package rules
 
-import pg_query "github.com/pganalyze/pg_query_go/v5"
+import pg_query "github.com/pganalyze/pg_query_go/v6"
 
 // NotNullNoDefaultRule flags SET NOT NULL on existing columns.
 type NotNullNoDefaultRule struct{}

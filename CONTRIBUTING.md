@@ -39,7 +39,7 @@ Code template:
 ```go
 package rules
 
-import pg_query "github.com/pganalyze/pg_query_go/v5"
+import pg_query "github.com/pganalyze/pg_query_go/v6"
 
 type YourRuleNameRule struct{}
 

@@ -1,6 +1,6 @@
 package rules
 
-import pg_query "github.com/pganalyze/pg_query_go/v5"
+import pg_query "github.com/pganalyze/pg_query_go/v6"
 
 // ForeignKeyNoNotValidRule flags foreign keys added without NOT VALID.
 type ForeignKeyNoNotValidRule struct{}
