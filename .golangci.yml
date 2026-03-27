@@ -1,0 +1,17 @@
+run:
+  timeout: 5m
+
+linters:
+  disable:
+    - gochecknoglobals
+  enable:
+    - errcheck
+    - govet
+    - staticcheck
+    - unused
+    - gofmt
+    - goimports
+
+linters-settings:
+  lll:
+    line-length: 120

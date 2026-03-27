@@ -1,0 +1,6 @@
+rules:
+  MISSING_FK_INDEX: error
+  MISSING_LOCK_TIMEOUT: ignore
+
+ignore_paths:
+  - migrations/legacy/

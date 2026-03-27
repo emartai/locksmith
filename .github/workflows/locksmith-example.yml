@@ -1,0 +1,15 @@
+name: Migration Safety
+
+on:
+  pull_request:
+    paths:
+      - "migrations/**"
+
+jobs:
+  locksmith:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: emartai/locksmith/action@v1
+        with:
+          path: migrations/

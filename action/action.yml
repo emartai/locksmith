@@ -1,0 +1,69 @@
+name: "Locksmith - Postgres Migration Safety"
+description: "Analyze Postgres migration files for dangerous operations before merging"
+author: "emartai"
+
+inputs:
+  path:
+    description: "Path to migration files or directory"
+    required: false
+    default: "migrations/"
+  severity:
+    description: "Minimum severity to fail on: dangerous, warning"
+    required: false
+    default: "dangerous"
+  format:
+    description: "Output format: text, json"
+    required: false
+    default: "text"
+  output:
+    description: "Optional file path for JSON output"
+    required: false
+    default: ""
+  upload_json_artifact:
+    description: "Upload the JSON report as a workflow artifact when format is json"
+    required: false
+    default: "false"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Download Locksmith
+      shell: bash
+      run: |
+        VERSION="${LOCKSMITH_VERSION:-latest}"
+        OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+        ARCH=$(uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/')
+
+        if [ "$VERSION" = "latest" ]; then
+          VERSION=$(curl -s https://api.github.com/repos/emartai/locksmith/releases/latest | grep '"tag_name"' | cut -d'"' -f4)
+        fi
+
+        URL="https://github.com/emartai/locksmith/releases/download/${VERSION}/locksmith_${OS}_${ARCH}.tar.gz"
+        curl -sSL "$URL" | tar -xz -C /usr/local/bin locksmith
+        chmod +x /usr/local/bin/locksmith
+
+        # Verify checksum
+        CHECKSUMS_URL="https://github.com/emartai/locksmith/releases/download/${VERSION}/checksums.txt"
+        curl -sSL "$CHECKSUMS_URL" -o /tmp/checksums.txt
+        sha256sum --ignore-missing --check /tmp/checksums.txt
+
+    - name: Run Locksmith
+      shell: bash
+      run: |
+        if [ -n "${{ inputs.output }}" ]; then
+          locksmith check "${{ inputs.path }}" \
+            --severity "${{ inputs.severity }}" \
+            --format "${{ inputs.format }}" \
+            --output "${{ inputs.output }}"
+        else
+          locksmith check "${{ inputs.path }}" \
+            --severity "${{ inputs.severity }}" \
+            --format "${{ inputs.format }}"
+        fi
+
+    - name: Upload JSON report
+      if: ${{ inputs.format == 'json' && inputs.upload_json_artifact == 'true' && inputs.output != '' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: locksmith-report
+        path: ${{ inputs.output }}
