@@ -5,14 +5,56 @@ on:
     tags:
       - "v*"
 
+permissions:
+  contents: write
+
 jobs:
-  release:
-    runs-on: ubuntu-latest
+  build:
+    name: Build (${{ matrix.id }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: linux-amd64
+            runner: ubuntu-latest
+            shell: bash
+            goos: linux
+            goarch: amd64
+            binary: locksmith
+            archive: locksmith_linux_amd64.tar.gz
+          - id: linux-arm64
+            runner: ubuntu-24.04-arm
+            shell: bash
+            goos: linux
+            goarch: arm64
+            binary: locksmith
+            archive: locksmith_linux_arm64.tar.gz
+          - id: darwin-amd64
+            runner: macos-15-intel
+            shell: bash
+            goos: darwin
+            goarch: amd64
+            binary: locksmith
+            archive: locksmith_darwin_amd64.tar.gz
+          - id: darwin-arm64
+            runner: macos-14
+            shell: bash
+            goos: darwin
+            goarch: arm64
+            binary: locksmith
+            archive: locksmith_darwin_arm64.tar.gz
+          - id: windows-amd64
+            runner: windows-2022
+            shell: pwsh
+            goos: windows
+            goarch: amd64
+            binary: locksmith.exe
+            archive: locksmith_windows_amd64.zip
+
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@v6
@@ -20,12 +62,86 @@ jobs:
           go-version: "1.25.8"
           cache: true
 
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v6
+      - name: Build Unix archive
+        if: matrix.shell == 'bash'
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME}"
+          COMMIT="${GITHUB_SHA}"
+          DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          STAGE="dist/${{ matrix.id }}"
+
+          mkdir -p "$STAGE"
+          CGO_ENABLED=1 GOOS="${{ matrix.goos }}" GOARCH="${{ matrix.goarch }}" \
+            go build -trimpath \
+            -ldflags "-X main.version=${VERSION} -X main.commit=${COMMIT} -X main.date=${DATE}" \
+            -o "${STAGE}/${{ matrix.binary }}" ./
+
+          cp README.md LICENSE "$STAGE/"
+          tar -C "$STAGE" -czf "dist/${{ matrix.archive }}" "${{ matrix.binary }}" README.md LICENSE
+
+      - name: Build Windows archive
+        if: matrix.shell == 'pwsh'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $version = $env:GITHUB_REF_NAME
+          $commit = $env:GITHUB_SHA
+          $date = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+          $stage = Join-Path "dist" "${{ matrix.id }}"
+
+          New-Item -ItemType Directory -Force -Path $stage | Out-Null
+          $env:CGO_ENABLED = "1"
+          $env:GOOS = "${{ matrix.goos }}"
+          $env:GOARCH = "${{ matrix.goarch }}"
+          go build -trimpath -ldflags "-X main.version=$version -X main.commit=$commit -X main.date=$date" -o (Join-Path $stage "${{ matrix.binary }}") ./
+
+          Copy-Item README.md, LICENSE -Destination $stage
+          Compress-Archive -Path (Join-Path $stage "${{ matrix.binary }}"), (Join-Path $stage "README.md"), (Join-Path $stage "LICENSE") -DestinationPath (Join-Path "dist" "${{ matrix.archive }}") -Force
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v4
         with:
-          distribution: goreleaser
-          version: latest
-          args: release --clean
+          name: ${{ matrix.archive }}
+          path: dist/${{ matrix.archive }}
+          if-no-files-found: error
+
+  publish:
+    name: Publish Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Flatten artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          find dist -mindepth 2 -type f -exec mv {} dist/ \;
+          find dist -mindepth 1 -type d -empty -delete
+
+      - name: Generate checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd dist
+          sha256sum locksmith_* > checksums.txt
+
+      - name: Create or update release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GPG_FINGERPRINT: ${{ secrets.GPG_FINGERPRINT }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/* --clobber
+          else
+            gh release create "$TAG" dist/* --title "$TAG" --generate-notes
+          fi
