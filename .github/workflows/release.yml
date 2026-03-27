@@ -118,19 +118,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: dist
-
-      - name: Flatten artifacts
-        shell: bash
-        run: |
-          set -euo pipefail
-          shopt -s nullglob
-          for dir in dist/*/; do
-            for file in "$dir"*; do
-              [ -f "$file" ] || continue
-              mv "$file" dist/
-            done
-            rmdir "$dir"
-          done
+          merge-multiple: true
 
       - name: Generate checksums
         shell: bash
