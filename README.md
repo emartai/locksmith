@@ -26,7 +26,7 @@ brew install emartai/locksmith/locksmith
 # Direct download (Linux/macOS)
 curl -sSL https://locksmith.dev/install.sh | sh
 
-# Go install
+# Go install (Go 1.25+)
 go install github.com/emartai/locksmith@latest
 ```
 

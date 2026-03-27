@@ -6,7 +6,7 @@ These 25 prompts are designed to be executed sequentially by a coding agent (Cla
 
 Before starting:
 - Have `context.md`, `design.md`, `rules.md`, `architecture.md`, and `security.md` in the project root
-- Have Go 1.22+ installed
+- Have Go 1.25+ installed
 - Have a GitHub repository created at `github.com/emartai/locksmith`
 
 After each prompt: verify the output compiles and tests pass before moving to the next prompt.
@@ -18,7 +18,7 @@ After each prompt: verify the output compiles and tests pass before moving to th
 ```
 Create the initial Go project structure for a CLI tool called "locksmith".
 
-Initialize a Go module at github.com/emartai/locksmith using Go 1.22.
+Initialize a Go module at github.com/emartai/locksmith using Go 1.25.
 
 Create the following empty directory structure:
 - cmd/
@@ -648,7 +648,7 @@ On every push and pull_request to main:
 
 1. Test job:
    - matrix: [ubuntu-latest, macos-latest]
-   - Go version: 1.22
+   - Go version: 1.25.8
    - Steps:
      a. Checkout
      b. Set up Go
@@ -711,7 +711,7 @@ Create .github/workflows/release.yml:
 - Trigger: on push of tags matching v*
 - Steps:
   a. Checkout with fetch-depth: 0 (GoReleaser needs git history)
-  b. Set up Go 1.22
+  b. Set up Go 1.25.8
   c. Run GoReleaser: goreleaser release --clean
   d. Environment: GITHUB_TOKEN, GPG_FINGERPRINT (for signing)
 
@@ -788,7 +788,7 @@ Create CONTRIBUTING.md.
 Include these sections:
 
 1. Development Setup
-   - Prerequisites: Go 1.22+, CGO_ENABLED=1, make
+   - Prerequisites: Go 1.25+, CGO_ENABLED=1, make
    - Clone and build: git clone, make build
    - Run tests: make test
    - Note: no Docker required

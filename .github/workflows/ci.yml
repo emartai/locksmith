@@ -25,7 +25,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.22"
+          go-version: "1.25.8"
           cache: true
 
       - name: Verify modules
@@ -54,7 +54,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.22"
+          go-version: "1.25.8"
           cache: true
 
       - name: Run golangci-lint
@@ -72,7 +72,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.22"
+          go-version: "1.25.8"
           cache: true
 
       - name: Install govulncheck
@@ -91,7 +91,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.22"
+          go-version: "1.25.8"
           cache: true
 
       - name: Build binary
@@ -99,10 +99,12 @@ jobs:
 
       - name: Check dangerous migrations
         run: |
+          set +e
           ./bin/locksmith check testdata/migrations/dangerous/
-          test $? -eq 1
+          status=$?
+          set -e
+          test "$status" -eq 1
 
       - name: Check clean migrations
         run: |
-          ./bin/locksmith check --config /dev/null testdata/migrations/clean/
-          test $? -eq 0
+          ./bin/locksmith check testdata/migrations/clean/
