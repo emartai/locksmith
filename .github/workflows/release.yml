@@ -123,15 +123,21 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          find dist -mindepth 2 -type f -exec mv {} dist/ \;
-          find dist -mindepth 1 -type d -empty -delete
+          shopt -s nullglob
+          for dir in dist/*/; do
+            for file in "$dir"*; do
+              [ -f "$file" ] || continue
+              mv "$file" dist/
+            done
+            rmdir "$dir"
+          done
 
       - name: Generate checksums
         shell: bash
         run: |
           set -euo pipefail
           cd dist
-          sha256sum locksmith_* > checksums.txt
+          sha256sum *.tar.gz *.zip > checksums.txt
 
       - name: Create or update release
         env:
