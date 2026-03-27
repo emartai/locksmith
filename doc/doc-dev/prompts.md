@@ -660,8 +660,8 @@ On every push and pull_request to main:
 
 2. Lint job:
    - ubuntu-latest only
-   - Uses golangci-lint-action@v4
-   - golangci-lint version: v1.57
+   - Uses golangci-lint-action@v6
+   - golangci-lint version: v1.64.8
 
 3. Security scan job:
    - ubuntu-latest only
